@@ -28,19 +28,6 @@ system.
 12. [Reads](#org450c66b)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 <a id="org6b07e8e"></a>
 
 # Administrivia
@@ -51,8 +38,6 @@ where types are inferred. It supports first-order functions and currying.
 Roughly,
 
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
-
-
 <colgroup>
 <col  class="org-left" />
 </colgroup>
@@ -64,25 +49,29 @@ Roughly,
 </table>
 
 -   Single-line comments begin with `//`.
+
 -   Multi-line comments are enclosed in `(* ⋯ *)`.
 
 -   Here's an example of explicit type annotations.
 
-        let x : int = 3
-        let first (x : 'a) (y: 'b) : 'a = x
+```F#
+   let x : int = 3
+   let first (x : 'a) (y: 'b) : 'a = x
+```
 
 -   Being “strongly typed” means that F# does little to no coercions, casts, for you.
 
-        // 5 / 2.5 (* Crashes: 5 and 2.5 are different types *)
-          float 5 / 2.5
-        ≈ 5.0 / 2.5
-        ≈ 2.0
+```F#
+      // 5 / 2.5 (* Crashes: 5 and 2.5 are different types *)
+        float 5 / 2.5
+      ≈ 5.0 / 2.5
+      ≈ 2.0
+```
 
-    F#'s conversion functions are named by the type they convert to; akin to C casts.
+- F#'s conversion functions are named by the type they convert to; akin to C casts.
 
-    -   E.g., `int 23.1` and `int "23"` both yield the integer `23`.
-    -   `string` is then the traditional “to string” method.
-
+   -   E.g., `int 23.1` and `int "23"` both yield the integer `23`.
+   -   `string` is then the traditional “to string” method.
 
 <a id="orgb5e877e"></a>
 
@@ -91,27 +80,10 @@ Roughly,
   The F# REPL and compiler are named `fsi/fsc` on Windows and `fsharpi/fsharpc` on Mac/Linux.
 ( Running these in Emacs Shell stalls; use `ansi-term` instead! )
 
-<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
-
-
-<colgroup>
-<col  class="org-left" />
-
-<col  class="org-left" />
-</colgroup>
-<tbody>
-<tr>
-<td class="org-left">Ubuntu</td>
-<td class="org-left">`sudo apt install mono-complete fsharp`</td>
-</tr>
-
-
-<tr>
-<td class="org-left">Mac</td>
-<td class="org-left">`brew install mono`</td>
-</tr>
-</tbody>
-</table>
+|Environment| Command|
+|---|---|
+|Ubuntu|`sudo apt install mono-complete fsharp`|
+|Mac|`brew install mono`|
 
 **Emacs Setup**
 
@@ -121,7 +93,7 @@ Roughly,
 The `[<EntryPoint>]` is necessary for using `fsharpc`.
 
 **Example Source File**
-
+```F# 
     module CheatSheet
 
     let myInt = 1972;;
@@ -130,6 +102,7 @@ The `[<EntryPoint>]` is necessary for using `fsharpc`.
     let main argv
       = printfn "%s" (string myInt)
         0
+```
 
 In a terminal, one runs `fsharpi CheatSheet.fs` to load this script,
 then `open CheatSheet;;` to have unqualified access to all contents; otherwise
@@ -151,41 +124,44 @@ Function & varaible names *must* begin with a lowercase letter, and may use \_ o
 -   Identifiers may have spaces and punctuation in them if they are enclosed in double-backticks;
     but no unicode or dashes in-general.
 
-        let ``this & that`` = 2
-
+```F# 
+   let ``this & that`` = 2
+```
 -   Functions are like variables, but with arguments, so the same syntax applies.
 
-<div class="parallel">
-    (* A curried function *)
-    let f x y = x + y
+```F#
+  (* A curried function *)
+  let f x y = x + y
 
-    (* Function application *)
-    let result = f 10 (2 * 6)
+  (* Function application *)
+  let result = f 10 (2 * 6)
 
-    (* Partial application *)
-    let g x = f x 2
+  (* Partial application *)
+  let g x = f x 2
 
 
 
-    // Composition
-    let sum9 = f 4 >> f 5
+  // Composition
+  let sum9 = f 4 >> f 5
 
-    // Threading: x |> f  ≈  f x
-    1 |> f 4 |> fun x -> 2 //// ⇒ 2
+  // Threading: x |> f  ≈  f x
+  1 |> f 4 |> fun x -> 2 //// ⇒ 2
+```
 
 Recursive definitions are marked with the `rec` keyword.
 
-    let rec fact n
-      =  if n = 0
-         then 1
-         else n * fact (n - 1)
-
-</div>
+```F#
+  let rec fact n
+    =  if n = 0
+       then 1
+       else n * fact (n - 1)
+```
 
 Here's an example of a higher-order function & multiple local functions
 & an infix operator & an anonymous function & the main method is
 parametricly polymorphic.
 
+```F#
     let try_add (bop : 'a -> 'a -> 'a) (test : 'a -> bool)
                 (fallback : 'a) (x : 'a) (y : 'a)
       = (* (/@/) x y  =  x /@/ y *)
@@ -197,6 +173,7 @@ parametricly polymorphic.
     (* The anonymous function uses ‘=’ as Boolean equality. *)
 
     -2 = -2 % 3 (* /Remainder/ after dividing out 3s *)
+```
 
 Top level and nested functions are declared in the same way;
 the final expression in a definition is the return value.
@@ -206,13 +183,13 @@ We also have the η-rule: `(fun x -> f x) = f`.
 F# has extension methods, like C#.
 That is, types are “open” &#x2014;as in  [Ruby](https://alhassy.github.io/RubyCheatSheet/CheatSheet.pdf).
 
+```F# 
     type System.String with
         member this.IsCool = this.StartsWith "J"
 
     // Try it out.
     true = "Jasim".IsCool
-
-
+```
 
 <a id="org62df07c"></a>
 
@@ -220,18 +197,18 @@ That is, types are “open” &#x2014;as in  [Ruby](https://alhassy.github.io/Ru
 
 Inequality is expressed with `<>`.
 
-    (* false, true, false, true, false, true, true, 1 *)
+```F#
     let x , y = true , false
-    in x = y, x || y, x && y, x >= y, 12 < 2, "abc" <= "abd"
-    , 1 <> 2, if x then 1 elif y then 2 else 3
-
+    (* false, true, false, true, false, true, true, 1 *)
+    (x = y, x || y, x && y, x >= y, 12 < 2, "abc" <= "abd", 1 <> 2, if x then 1 elif y then 2 else 3)
+```
 
 <a id="org2fc550b"></a>
 
 # Strings
 
 F# strings are not arrays, or lists, of characters as in C or Haskell.
-
+```F#
     "string catenation" = "string " ^ "catenation"
 
     Seq.toList "woah"  // ⇒ ['w'; 'o'; 'a'; 'h']
@@ -239,14 +216,14 @@ F# strings are not arrays, or lists, of characters as in C or Haskell.
     Printf.printf "%d %s" 1972 "taxi";;
 
     let input = System.Console.ReadLine()
-
+```
 
 <a id="org8d34d3c"></a>
 
 # Records
 
 Records: Products with named, rather than positional, components.
-
+```F#
     type Person = {Name: string; Work: string}
 
     (* Construction *)
@@ -269,14 +246,14 @@ Records: Products with named, rather than positional, components.
 
     (* “copy with update” *)
     let qasim = {jasim with Name = "Qasim"}
-
+```
 Types are “open”, as in [Ruby](https://alhassy.github.io/RubyCheatSheet/CheatSheet.pdf).
-
+```F#
     type Person with
         member self.rank = self.Name.Length
 
     qasim.rank // ⇒ 5
-
+```
 
 <a id="org5088cd6"></a>
 
@@ -287,11 +264,11 @@ Sums, or “variants”: A unified way to combine different types into a single
 -   Essentially each case denotes a “state” along with some relevant “data”.
 -   Constructors must begin with a capital letter.
 -   We may parameterise using OCaml style, `'a`, or/and C# style, `<'a>`.
-
+```F#
     type 'a Expr = Undefined | Var of 'a | Const of int | Sum of Expr<'a> * 'a Expr
 
     let that = Const 2 (* A value is one of the listed cases. *)
-
+```
 The tags allow us to *extract* components of a variant value
 as well as to case against values by inspecting their tags.
 This is *pattern matching*.
@@ -299,7 +276,7 @@ This is *pattern matching*.
 -   `match⋯with⋯` let's us do case analysis; underscore matches anything.
 -   Patterns may be guarded using `when`.
 -   Abbreviation for functions defined by pattern matching: `function cs ≈ fun x -> match x with cs`
-
+```F#
     let rec eval = function
         | Undefined  as u             -> failwith "Evil"  (* Throw exception *)
         | Var x                       -> 0 + match x with "x" -> 999 | _ -> -1
@@ -315,7 +292,7 @@ This is *pattern matching*.
     (* Type aliases can also be formed this way *)
     type myints = int
     let it : myints = 3
-
+```
 Note that we can give a pattern a name; above we mentioned `u`,
 but did not use it.
 
@@ -325,10 +302,10 @@ but did not use it.
     -   E.g., `[| x ; y ; z|] -> y`.
 
 Builtins: [Options](https://docs.microsoft.com/en-us/dotnet/fsharp/language-reference/options) and [Choice](https://msdn.microsoft.com/visualfsharpdocs/conceptual/core.choice%5b%27t1%2c%27t2%5d-union-%5bfsharp%5d) &#x2014;these are known as `Maybe` and `Either` in Haskell.
-
+```F#
     type 'a Option = None | Some of 'a
     type ('a, 'b) Choice = Choice1Of2 of 'a | Choice2Of2 of 'b
-
+```
 See [here](https://docs.microsoft.com/en-us/dotnet/fsharp/language-reference/pattern-matching) for a complete reference on pattern matching.
 
 
@@ -338,7 +315,7 @@ See [here](https://docs.microsoft.com/en-us/dotnet/fsharp/language-reference/pat
 # Tuples and Lists
 
 Tuples: Parentheses are optional, comma is the main operator.
-
+```F# 
     let mytuple  : int * string * float = (3, "three", 3.0)
 
     (* Pattern matching & projection *)
@@ -367,22 +344,24 @@ Tuples: Parentheses are optional, comma is the main operator.
      | []     -> 1
      | [x; y] -> x
      // | (x :: ys) -> x
-
+```
 Here is `[0 ; 3 ; 6 ; 9 ; 12]` in a number of ways:
-
+```F# 
        [0..3..14]                                   (* Ranges, with a step    *)
     ≈ [for i in 0..14 do if i % 3 = 0 then yield i] (* Guarded comprehensions *)
     ≈ [for i in 0..4 -> 3 * i]                      (* Simple comprehensions  *)
     ≈  List.init 5 (fun i -> 3 * i)
         (* First 5 items of an “unfold” starting at 0 *)
-
+```
 Expected: concat, map, filter, sort, max, min, etc.
 `fold` starts from the left of the list, `foldBack` starts from the right.
 `reduce` does not need an inital accumulator.
 
+```F#
     zs |> List.reduce (+)  // ⇒ 9
     (* Example of a simple “for loop”. *)
     [1..10] |> List.iter (printfn "value is %A")
+```
 
 Arrays use `[|⋯|]` syntax, and are efficient,
 but otherwise are treated the same as lists;
@@ -391,14 +370,12 @@ E.g., `[| 1; 2 |]` is an array.
 
 Lazy, and infinite, structures are obtained by ‘sequences’.
 
-
-
 <a id="org2ec44b9"></a>
 
 # Options
 
 [Option](https://docs.microsoft.com/en-us/dotnet/fsharp/language-reference/options): Expressing whether a value is present or not.
-
+```F#
     (* type 'a option = None | Some of 'a *)
 
     let divide x y = if y = 0 then None else Some (x / y)
@@ -406,7 +383,7 @@ Lazy, and infinite, structures are obtained by ‘sequences’.
 
     let getInt ox = match ox with None -> 0 | Some x -> x
     2 = getInt (Some 2)
-
+```
 
 <a id="orgb1c12e3"></a>
 
@@ -418,7 +395,7 @@ A *function* is a sequence of expressions; its *return value*
 is the value of the final expression &#x2014;all other expressions
 are of unit type.
 
-<div class="parallel">
+```F# 
     (* type unit = () *)
     let ex : unit = ()
 
@@ -438,8 +415,7 @@ are of unit type.
         x
 
     let res = first 1972 12
-
-</div>
+```
 
 
 <a id="orgfb8ae57"></a>
@@ -448,14 +424,17 @@ are of unit type.
 
 We may use the `%A` to generically print something.
 
+```F#
     // ⇒ 1 2.000000 true ni x [1; 4]
     printfn "%i %f %b %s %c %A" 1 2.0 true "ni" 'x' [1; 4]
+```
 
 Let's use [C#'s integer parsing](https://docs.microsoft.com/en-us/dotnet/api/system.int32.parse?view=netframework-4.8) and printing methods:
 
+```F#
     let x = System.Int32.Parse("3")
     System.Console.WriteLine("hello " + string x)
-
+```
 
 <a id="org450c66b"></a>
 
@@ -464,7 +443,9 @@ Let's use [C#'s integer parsing](https://docs.microsoft.com/en-us/dotnet/api/sys
 -   [F# Meta-Tutorial](https://fsharp.org/learn.html)
 -   [Learn F# in ~60 minutes](https://learnxinyminutes.com/docs/fsharp/) ---<https://learnxinyminutes.com/>
 -   [F# for Fun & for Profit!](https://fsharpforfunandprofit.com/series/why-use-fsharp.html) &#x2013; EBook
-    -   [Why use F#?](https://fsharpforfunandprofit.com/series/why-use-fsharp.html) &#x2014;A series of posts
+-   [Why use F#?](https://fsharpforfunandprofit.com/series/why-use-fsharp.html) &#x2014;A series of posts
+    
+-   [Awesome F#](https://github.com/fsprojects/awesome-fsharp)
 -   [Microsoft's .Net F# Guide](https://docs.microsoft.com/en-us/dotnet/fsharp/language-reference/options)
     -   [F# Language Reference](https://docs.microsoft.com/en-us/dotnet/fsharp/language-reference/options)
 -   [Learn F# in One Video](https://www.youtube.com/watch?v=c7eNDJN758U&list=PLGLfVvz_LVvSX7fVd4OUFp_ODd86H0ZIY&index=47&t=0s) ---[Derek Banas' “Learn in One Video” Series](https://www.youtube.com/playlist?list=PLGLfVvz_LVvSX7fVd4OUFp_ODd86H0ZIY)
