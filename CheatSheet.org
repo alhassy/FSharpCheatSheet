@@ -1,0 +1,776 @@
+#+TITLE: F# Cheat Sheet
+# SUBTITLE: ---Reference Sheet for “What I'm Currently Learning”---
+#+MACRO: blurb Reference sheet of the basics of F# ^_^
+#+AUTHOR: [[http://www.cas.mcmaster.ca/~alhassm/][Musa Al-hassy]]
+#+EMAIL: alhassy@gmail.com
+#+INCLUDE: CheatSheet/CheatSheetSetup.org
+#+PROPERTY: header-args :results replace
+#+TODO: Todo | spacing LaTeX
+* LaTeX Extra, Local, Setup  :ignore:
+
+# Empty by default.
+#+LATEX_HEADER: \def\cheatsheeturl{https://github.com/alhassy/FSharpCheatSheet}
+
+# The following are the defaults & may be omitted.
+#+LATEX_HEADER: \def\cheatsheetcols{2}
+#+LATEX_HEADER: \landscapetrue
+#+LATEX_HEADER: \def\cheatsheetitemsep{-0.5em}
+
+# Example unicode declarations; see section “unicode” below.
+#+LATEX_HEADER: \newunicodechar{𝑻}{\ensuremath{T}}
+#+LATEX_HEADER: \newunicodechar{⊕}{\ensuremath{\oplus}}
+#+LATEX_HEADER: \newunicodechar{≈}{\ensuremath{\approx}}
+
+* COMMENT ~LaTeX~ commands ↦ ~#+latex: \LaTeX~
+
+  Execute the following block, with ~C-c C-c~ anywhere inside it,
+  to hide all LaTeX specific items away so that, for example, the generated HTML
+  does not show them.
+
+  #+BEGIN_SRC emacs-lisp :results no
+(defun my/replace-in-buffer (this that)
+  "Replace every occurance of regexp ‘this’ with ‘that’
+   in the current buffer."
+   (interactive)
+   (save-excursion
+    (beginning-of-buffer)
+    (while (re-search-forward this nil t)
+      (replace-match that)
+    ))
+)
+
+;; Replace newline, any number of space, then room or vspace with a #+latex: beforehand.
+(let (this that)
+  (dolist (kp '( ( "^[ ]*\\\\room" . "#+latex: \\\\room")
+         ( "^[ ]*\\\\vspace" . "#+latex: \\\\vspace")
+         ( "^[ ]*\\\\newpage" . "#+latex: \\\\newpage")
+         ( "^[ ]*\\\\columnbreak" . "#+latex: \\\\columnbreak")
+         ))
+    (setq this (car kp))
+    (setq that (cdr kp))
+    (my/replace-in-buffer this that)
+   )
+)
+  #+END_SRC
+
+  #+RESULTS:
+
+* Administrivia
+#+latex: \hspace{-1.3em}
+  F# is a strict, statically, and strongly typed, multi-paradigm, language
+  where types are inferred. It supports first-order functions and currying.
+
+  Roughly,
+  |F# ≈ [[https://github.com/alhassy/OCamlCheatSheet][OCaml]] + C#|
+
+  + Single-line comments begin with ~//~.
+  + Multi-line comments are enclosed in ~(* ⋯ *)~.
+
+  + Here's an example of explicit type annotations.
+    #+BEGIN_SRC fsharp
+let x : int = 3
+let first (x : 'a) (y: 'b) : 'a = x
+#+END_SRC
+
+  + Being “strongly typed” means that F# does little to no coercions, casts, for you.
+    #+BEGIN_SRC fsharp
+// 5 / 2.5 (* Crashes: 5 and 2.5 are different types *)
+  float 5 / 2.5
+≈ 5.0 / 2.5
+≈ 2.0
+#+END_SRC
+
+     F#'s conversion functions are named by the type they convert to; akin to C casts.
+     - E.g., ~int 23.1~ and ~int "23"~ both yield the integer ~23~.
+     - ~string~ is then the traditional “to string” method.
+
+* Getting Started
+
+  #+latex: \hspace{-1.3em}
+  The F# REPL and compiler are named ~fsi/fsc~ on Windows and ~fsharpi/fsharpc~ on Mac/Linux.
+( Running these in Emacs Shell stalls; use ~ansi-term~ instead! )
+
+| Ubuntu | ~sudo apt install mono-complete fsharp~ |
+| Mac    | ~brew install mono~                     |
+
+#+latex: \begin{parallel}
+
+ *Emacs Setup*
+#+BEGIN_SRC emacs-lisp
+(use-package fsharp)
+(use-package ob-fsharp)
+#+END_SRC
+
+
+#+latex: \vspace{1em}\hrule\vspace{1em}
+The ~[<EntryPoint>]~ is necessary for using ~fsharpc~.
+
+#+latex: \columnbreak
+
+*Example Source File*
+#+BEGIN_SRC fsharp :tangle "CheatSheet.fs"
+module CheatSheet
+
+let myInt = 1972;;
+
+[<EntryPoint>]
+let main argv
+  = printfn "%s" (string myInt)
+    0
+#+END_SRC
+
+#+latex: \end{parallel}
+
+In a terminal, one runs ~fsharpi CheatSheet.fs~ to load this script,
+then ~open CheatSheet;;~ to have unqualified access to all contents; otherwise
+type in ~CheatSheet.myInt;;~ to access items.
+One may enter multiple lines in the REPL, then execute them by entering ~;;~.
+Use ~#quit;;~ to leave the REPL.
+
+Execute ~fsharpc CheatSheet.fs; mono CheatSheet.exe~ to compile the file then run it.
+#
+# (shell-command-to-string "fsharpc --nologo CheatSheet.fs; mono CheatSheet.exe")
+
+:More:
+We may omit the ~open~ clause by, say, passing another file that has the commands we want executed at the REPL.
+The following with ~fsharpi --nologo CheatSheet.fs --use:"here.fs"~ yields ~1972~.
+#+BEGIN_SRC fsharp :tangle here.fs
+open CheatSheet
+#+END_SRC
+:End:
+
+** COMMENT More ;; Homemade Interactive Emacs F# Setup
+
+Recommended: Follow the instructions bellow to obtain an F# compiler,
+then install fsharp-mode in Emacs (M-x package-refresh-contents,
+M-x package-install fsharp-mode) or follow the instructions on the F# homepage to set up VSCode.
+
+Provides support for the F# language in Emacs. Includes the following features:
+
++ Support for F# Interactive
++ Displays type signatures and tooltips
++ Provides syntax highlighting and indentation.
++ Intellisense support.
+
+  #+BEGIN_SRC emacs-lisp :tangle no
+(shell-command-to-string "fsharpc --nologo CheatSheet.fs; mono CheatSheet.exe")
+
+
+
+(local-set-key (kbd "<f6>") (lambda () (interactive)
+  "
+    org-babel-tangle the whole file, then execute the final query
+    in the current SRC block.
+
+    If the query mentions the variable ‘X’, then show all possible solutions
+    followed by ‘false’. Usually one presses ‘;’ to see other solutions,
+    but in Emacs this only shows one futher solution then terminates.
+    We get around this by executing essentially
+    “forall(your-query-with-X, writeln(X)).”
+    This prints all solutions X to your query.
+
+    If you want to use a variable but don't want to see all solutions,
+    then avoid using ‘X’; e.g., use ‘Y’ ^_^.
+  "
+  (let ((kill-buffer-query-functions nil)
+        (inhibit-read-only t)
+        (buf "*FSharp*")
+        (target (car (org-babel-tangle))))
+
+    ;; Kill any existing ansi-terms without question.
+    (ignore-errors
+      ; (switch-to-buffer buf)
+      (kill-buffer buf))
+
+    ;; Get final expression in current source block
+    (search-forward "#+END_SRC")
+    (previous-line)
+    (setq xx (thing-at-point 'line t))
+
+
+    (when nil ;; Not needed; ansi-term w/ bash works fine.
+      ;; Leaving this alternative here in-case needed in the future.
+
+      ;; Sending the expression at the prompt wont work as expected since the fsharpi command
+      ;; stalls within Emacs. Instead, we make an auxilairy file with the desired queries,
+      ;; then pass that to the command line tool.
+      (with-temp-buffer
+        (insert "open CheatSheet\n")
+        (insert xx)
+        (write-file "___here.fs"))
+
+      (async-shell-command "fsharpi --nologo CheatSheet.fs --use:\"___here.fs\"")
+      (other-window 1))
+
+    ;; Make a term process NAME in a buffer, running PROGRAM.
+    ;; The name of the buffer is made by surrounding NAME with ‘*’s.
+    ;; 3ʳᵈ argument is a startfile, and remaining arguments are args to the program.
+    ;; E.g., (switch-to-buffer (make-term "FSharp" "echo" nil "hi"))
+    (switch-to-buffer (make-term "FSharp" "fsharpi" nil "--nologo" "CheatSheet.fs" "--use:here.fs" "--warn:0"))
+
+
+    ;; (ansi-term "bash")
+    ;; (other-window 1)
+    ;; (end-of-buffer)
+    ;; (insert (format "fsharpi --nologo %s" target))
+    ;;    (comint-send-input nil t) ;; Send it, i.e., “press enter at prompt”.
+    ; (end-of-buffer)
+    ; (insert "23;;")
+    ; (comint-send-input nil t) ;; Send it, i.e., “press enter at prompt”.
+
+  ;;
+)))
+
+(when nil
+  ;; Paste the final query
+  (insert xx)
+  (comint-send-input nil t) ;; Send it, i.e., “press enter at prompt”.
+
+  ;; Insert query again, but do not send, in case user wishes to change it.
+  (insert xx)
+  (previous-line) (end-of-line)
+)
+#+END_SRC
+
+* Functions
+#+latex: \hspace{-1.3em}
+  A function is declared with the ~let~ keyword
+---variables are functions of zero arguments.
+Function & varaible names /must/ begin with a lowercase letter, and may use _ or ~'~.
++ Identifiers may have spaces and punctuation in them if they are enclosed in double-backticks;
+    but no unicode or dashes in-general.
+    #+BEGIN_SRC fsharp
+let ``this & that`` = 2
+#+END_SRC
+
++ Functions are like variables, but with arguments, so the same syntax applies.
+
+#+begin_parallel org
+#+BEGIN_SRC fsharp
+(* A curried function *)
+let f x y = x + y
+
+(* Function application *)
+let result = f 10 (2 * 6)
+
+(* Partial application *)
+let g x = f x 2
+#+END_SRC
+
+#+latex: \columnbreak
+#+BEGIN_SRC fsharp
+
+#+END_SRC
+#+BEGIN_SRC fsharp
+// Composition
+let sum9 = f 4 >> f 5
+
+// Threading: x |> f  ≈  f x
+1 |> f 4 |> fun x -> 2 //// ⇒ 2
+#+END_SRC
+
+Recursive definitions are marked with the ~rec~ keyword.
+#+BEGIN_SRC fsharp
+let rec fact n
+  =  if n = 0
+     then 1
+     else n * fact (n - 1)
+#+END_SRC
+#+end_parallel
+
+#+latex: \vspace{-1em}
+ Here's an example of a higher-order function & multiple local functions
+ & an infix operator & an anonymous function & the main method is
+ parametricly polymorphic.
+#+BEGIN_SRC fsharp
+let try_add (bop : 'a -> 'a -> 'a) (test : 'a -> bool)
+            (fallback : 'a) (x : 'a) (y : 'a)
+  = (* (/@/) x y  =  x /@/ y *)
+    let (/@/) x y = bop x y
+    let wrap a = if test a then a else fallback
+    wrap x /@/ wrap y
+
+699 = try_add (+) (fun a -> a % 3 = 0) (666) (-1) 33
+(* The anonymous function uses ‘=’ as Boolean equality. *)
+
+-2 = -2 % 3 (* /Remainder/ after dividing out 3s *)
+#+END_SRC
+
+Top level and nested functions are declared in the same way;
+the final expression in a definition is the return value.
+
+We also have the η-rule: ~(fun x -> f x) = f~.
+
+F# has extension methods, like C#.
+That is, types are “open” ---as in  [[https://alhassy.github.io/RubyCheatSheet/CheatSheet.pdf][Ruby]].
+#+BEGIN_SRC fsharp
+type System.String with
+    member this.IsCool = this.StartsWith "J"
+
+// Try it out.
+true = "Jasim".IsCool
+#+END_SRC
+
+* spacing break                                                      :ignore:
+#+latex: \columnbreak
+* Booleans
+#+latex: \hspace{-1.3em}
+Inequality is expressed with ~<>~.
+#+BEGIN_SRC fsharp
+(* false, true, false, true, false, true, true, 1 *)
+let x , y = true , false
+in x = y, x || y, x && y, x >= y, 12 < 2, "abc" <= "abd"
+, 1 <> 2, if x then 1 elif y then 2 else 3
+#+END_SRC
+
+* Strings
+#+latex: \hspace{-1.3em}
+F# strings are not arrays, or lists, of characters as in C or Haskell.
+#+BEGIN_SRC fsharp
+"string catenation" = "string " ^ "catenation"
+
+Seq.toList "woah"  // ⇒ ['w'; 'o'; 'a'; 'h']
+
+Printf.printf "%d %s" 1972 "taxi";;
+
+let input = System.Console.ReadLine()
+#+END_SRC
+
+* Records
+  #+latex: \hspace{-1.3em}
+  Records: Products with named, rather than positional, components.
+
+#+BEGIN_SRC fsharp
+type Person = {Name: string; Work: string}
+
+(* Construction *)
+let jasim = {Name = "Jasim"; Work = "Farm"}
+
+(* Pattern matching for deconstruction *)
+let {Name = who; Work = where} = jasim
+    // ⇒ who = "Jasim" && where = "Farm"
+let {Name = woah} = jasim  // ⇒ woah = "Jasim"
+let go {Name = qx; Work = qy} = qx.Length + 2
+
+(* Or we can use dot notation -- usual projections *)
+let go' p = p.Name ^ p.Work
+
+(* Or using explicit casing *)
+let go'' x =
+  match x with
+    | {Name = n} -> n
+    | _ -> "Uknown"
+
+(* “copy with update” *)
+let qasim = {jasim with Name = "Qasim"}
+#+END_SRC
+
+# latex: \columnbreak
+Types are “open”, as in [[https://alhassy.github.io/RubyCheatSheet/CheatSheet.pdf][Ruby]].
+#+BEGIN_SRC fsharp
+type Person with
+    member self.rank = self.Name.Length
+
+qasim.rank // ⇒ 5
+#+END_SRC
+
+* Variants and Pattern Matching
+  # Algebraic Data Types
+
+#+latex: \hspace{-1.3em}
+Sums, or “variants”: A unified way to combine different types into a single type;
++ Essentially each case denotes a “state” along with some relevant “data”.
++ Constructors must begin with a capital letter.
++ We may parameterise using OCaml style, ~'a~, or/and C# style, ~<'a>~.
+#+BEGIN_SRC fsharp
+type 'a Expr = Undefined | Var of 'a | Const of int | Sum of Expr<'a> * 'a Expr
+
+let that = Const 2 (* A value is one of the listed cases. *)
+#+END_SRC
+
+The tags allow us to /extract/ components of a variant value
+as well as to case against values by inspecting their tags.
+This is /pattern matching/.
++   ~match⋯with⋯~ let's us do case analysis; underscore matches anything.
++ Patterns may be guarded using ~when~.
++  Abbreviation for functions defined by pattern matching: ~function cs ≈ fun x -> match x with cs~
+
+#+BEGIN_SRC fsharp
+let rec eval = function
+    | Undefined  as u             -> failwith "Evil"  (* Throw exception *)
+    | Var x                       -> 0 + match x with "x" -> 999 | _ -> -1
+    | Const n    when n <= 9      -> 9
+    | Sum (l, r)                  -> eval l + eval r
+    | _                           -> 0 (* Default case *)
+
+4   = eval that
+-1  = (Var "nine" |> eval)
+999 = eval (Var "x")
+0   = eval (Const 10)
+
+(* Type aliases can also be formed this way *)
+type myints = int
+let it : myints = 3
+#+END_SRC
+
+Note that we can give a pattern a name; above we mentioned ~u~,
+but did not use it.
+
++ Repeated & non-exhaustive patterns trigger a warning; e.g., remove the default case above.
+
++ You can pattern match on numbers, characters, tuples, options, lists, and arrays.
+  - E.g., ~[| x ; y ; z|] -> y~.
+
+
+Builtins: [[https://docs.microsoft.com/en-us/dotnet/fsharp/language-reference/options][Options]] and [[https://msdn.microsoft.com/visualfsharpdocs/conceptual/core.choice%255b%2527t1%252c%2527t2%255d-union-%255bfsharp%255d][Choice]] ---these are known as ~Maybe~ and ~Either~ in Haskell.
+#+BEGIN_SRC fsharp
+type 'a Option = None | Some of 'a
+type ('a, 'b) Choice = Choice1Of2 of 'a | Choice2Of2 of 'b
+#+END_SRC
+
+See [[https://docs.microsoft.com/en-us/dotnet/fsharp/language-reference/pattern-matching][here]] for a complete reference on pattern matching.
+
+* spacing break                                                      :ignore:
+#+latex: \columnbreak
+* Tuples and Lists
+  #+latex: \hspace{-1.3em}
+  Tuples: Parentheses are optional, comma is the main operator.
+#+BEGIN_SRC fsharp
+  let mytuple  : int * string * float = (3, "three", 3.0)
+
+  (* Pattern matching & projection *)
+  let (woah0, woah1, woah2) = mytuple
+  let add_1and4 (w, x, y, z) = w + z
+  let that = fst ("that", false)
+
+  (* A singelton list of one tuple !!!!  *)
+  let zs = [ 1, "two", true ]
+
+  (* A List of pairs *)
+  ['a',0 ; 'b',1 ; 'c', 2]
+
+  (* Lists:  type 'a list = [] | (::) of 'a * 'a list  *)
+  let xs = [1; 2; 3]
+  [1; 2; 3] = 1 :: 2 :: 3 :: [] (* Syntactic sugar *)
+
+  (* List catenation *)
+  [1;2;4;6] = [1;2] @ [4;6]
+  (* Pattern matching example; Only works on lists of length 3 *)
+  let go [x; y; z] = x + y + z
+  14 = go [2;5;7]
+  #+END_SRC
+
+#+BEGIN_SRC fsharp
+(* Crashes: Incomplete pattern matching *)
+match [1; 2; 3] with
+ | []     -> 1
+ | [x; y] -> x
+ // | (x :: ys) -> x
+#+END_SRC
+
+:More:
++ Syntax: ~[x₀; ...; xₙ]~
+
+  - Tuples are optionally enclosed in parens;
+    hence ~[x₀, ..., xₙ]~ is a singleton list
+    consisting of only one tuple!
+
+   # ocaml:
+   # + Expected functionals:
+   #     ~List.nth~ for list lookup,
+   #     ~List.map~, ~List.filter~, etc.
+   #
+
++ Cons operation is denoted ~::~.
+
+  # ocaml:
+  # + Arrays have syntax ~[|x₀; ...; xₙ|]~
+  #    with 0-indexing lookup ~arr.(n)~.
+  #
+:End:
+
+Here is ~[0 ; 3 ; 6 ; 9 ; 12]~ in a number of ways:
+#+BEGIN_SRC fsharp
+   [0..3..14]                                   (* Ranges, with a step    *)
+≈ [for i in 0..14 do if i % 3 = 0 then yield i] (* Guarded comprehensions *)
+≈ [for i in 0..4 -> 3 * i]                      (* Simple comprehensions  *)
+≈  List.init 5 (fun i -> 3 * i)
+    (* First 5 items of an “unfold” starting at 0 *)
+#+END_SRC
+# ≈ [0..14] |> List.map (fun x -> if x % 3 = 0 then [x] else []) |> List.concat
+
+Expected: concat, map, filter, sort, max, min, etc.
+~fold~ starts from the left of the list, ~foldBack~ starts from the right.
+~reduce~ does not need an inital accumulator.
+#+BEGIN_SRC fsharp
+zs |> List.reduce (+)  // ⇒ 9
+(* Example of a simple “for loop”. *)
+[1..10] |> List.iter (printfn "value is %A")
+#+END_SRC
+
+Arrays use ~[|⋯|]~ syntax, and are efficient,
+but otherwise are treated the same as lists;
+Pattern matching & standard functions are nearly identical.
+E.g., ~[| 1; 2 |]~ is an array.
+
+# latex: \columnbreak
+
+Lazy, and infinite, structures are obtained by ‘sequences’.
+
+
+* spacing break                                                      :ignore:
+#+latex: \columnbreak
+* Options
+#+latex: \hspace{-1.3em}
+[[https://docs.microsoft.com/en-us/dotnet/fsharp/language-reference/options][Option]]: Expressing whether a value is present or not.
+#+BEGIN_SRC fsharp
+  (* type 'a option = None | Some of 'a *)
+
+  let divide x y = if y = 0 then None else Some (x / y)
+  None = divide 1 0
+
+  let getInt ox = match ox with None -> 0 | Some x -> x
+  2 = getInt (Some 2)
+  #+END_SRC
+
+* Side Effects ---[[https://docs.microsoft.com/en-us/dotnet/fsharp/language-reference/unit-type][Unit Type]]
+#+latex: \hspace{-1.3em}
+Operations whose use produces a side-effect return the ~unit~ type.
+This’ akin to the role played by ~void~ in C.
+A /function/ is a sequence of expressions; its /return value/
+is the value of the final expression ---all other expressions
+are of unit type.
+
+#+begin_parallel org
+#+BEGIN_SRC fsharp
+(* type unit = () *)
+let ex : unit = ()
+
+let myupdate (arr : 'a array) (e : 'a)
+         (i : int) : unit
+  = Array.set arr i e
+
+let nums = [| 0; 1; 2|]
+myupdate nums 33 1
+33 = nums.[1]
+#+END_SRC
+
+#+latex: \columnbreak
+#+BEGIN_SRC fsharp
+let my_io () = printfn "Hello!"
+
+let first x y
+  = my_io ()
+    let _ = y
+    x
+
+let res = first 1972 12
+#+END_SRC
+#+end_parallel
+
+#+latex: \vspace{-1em}
+* Printing & Integrating with C#
+  #+latex: \hspace{-1.3em}
+We may use the ~%A~ to generically print something.
+#+BEGIN_SRC fsharp :results output
+// ⇒ 1 2.000000 true ni x [1; 4]
+printfn "%i %f %b %s %c %A" 1 2.0 true "ni" 'x' [1; 4]
+#+END_SRC
+
+# latex: \hspace{-1.3em}
+  Let's use [[https://docs.microsoft.com/en-us/dotnet/api/system.int32.parse?view=netframework-4.8][C#'s integer parsing]] and printing methods:
+#+BEGIN_SRC fsharp :results output
+let x = System.Int32.Parse("3")
+System.Console.WriteLine("hello " + string x)
+#+END_SRC
+
+* Reads
+
+#+latex: {\color{white}.}\vspace{-1em}
+
++ [[https://fsharp.org/learn.html][F# Meta-Tutorial]]
++ [[https://learnxinyminutes.com/docs/fsharp/][Learn F# in ~60 minutes]] ---https://learnxinyminutes.com/
++ [[https://fsharpforfunandprofit.com/series/why-use-fsharp.html][F# for Fun & for Profit!]] -- EBook
+  - [[https://fsharpforfunandprofit.com/series/why-use-fsharp.html][Why use F#?]] ---A series of posts
++ [[https://docs.microsoft.com/en-us/dotnet/fsharp/language-reference/options][Microsoft's .Net F# Guide]]
+  - [[https://docs.microsoft.com/en-us/dotnet/fsharp/language-reference/options][F# Language Reference]]
++ [[https://www.youtube.com/watch?v=c7eNDJN758U&list=PLGLfVvz_LVvSX7fVd4OUFp_ODd86H0ZIY&index=47&t=0s][Learn F# in One Video]] ---[[https://www.youtube.com/playlist?list=PLGLfVvz_LVvSX7fVd4OUFp_ODd86H0ZIY][Derek Banas' “Learn in One Video” Series]]
++ [[https://realworldocaml.org/][Real World OCaml]] ---F# shares much syntax with OCaml
++ [[https://en.wikibooks.org/wiki/F_Sharp_Programming][F# Wikibook]]
+
+** COMMENT Named & Optional arguments
+     https://docs.microsoft.com/en-us/dotnet/fsharp/language-reference/parameters-and-arguments
+
+   #+BEGIN_SRC fsharp
+  (* Labelled arguments, using ‘~’, means position is irrelevant *)
+  [1; 2; 3] = List.map f=String.Length ["a", "ab", "abc"]
+  [1; 2; 3] = List.map  ~f:String.length ["a", "ab", "abc"];;
+ #+END_SRC
+
+* COMMENT Other things to explore
+
+  ➩ traits/typeclasses in F#.
+  ➩ mutable records and references.
+  ➩ calling F# from C# code.
+
+** COMMENT F# is an OO language as well.
+ Here's how we would do interfaces and inheritance.
+ #+BEGIN_SRC fsharp
+type IMonoid<'a> =
+    abstract empty : 'a
+    abstract sum   : 'a -> 'a -> 'a
+
+type IGroup<'a> =
+    inherit IMonoid<'a>
+    abstract inverse : 'a -> 'a
+
+// An implementation
+type Integers =
+    interface IGroup<int> with
+        member ___.inverse(e) = - e
+        member ___.sum x y    = x + y
+        member ___.empty      = 0
+ #+END_SRC
+
+ #+RESULTS:
+ #+begin_example
+type IMonoid<'a> =
+  interface
+    abstract member empty : 'a
+    abstract member sum : 'a -> 'a -> 'a
+  end
+type IGroup<'a> =
+  interface
+    inherit IMonoid<'a>
+    abstract member inverse : 'a -> 'a
+  end
+type Integers =
+  class
+    interface IGroup<int>
+  end
+ #+end_example
+
+** COMMENT Modules
+
+   Modules group items together.
+
+** COMMENT Active Patterns ≈ DTL Views                           :from_fs_cs:
+ Active Patterns - Active patterns allow programmers to wrap ad hoc values and objects in union-like structures for use in pattern matching.
+ https://en.wikibooks.org/wiki/F_Sharp_Programming/Active_Patterns
+
+ -----------------------------------------------------------------------------------------
+
+   Complete active patterns:
+
+ let (|Even|Odd|) i =
+     if i % 2 = 0 then Even else Odd
+
+ let testNumber i =
+     match i with
+     | Even -> printfn "%d is even" i
+     | Odd -> printfn "%d is odd" i
+ Parameterized active patterns:
+
+ let (|DivisibleBy|_|) by n =
+     if n % by = 0 then Some DivisibleBy else None
+
+ let fizzBuzz = function
+     | DivisibleBy 3 & DivisibleBy 5 -> "FizzBuzz"
+     | DivisibleBy 3 -> "Fizz"
+     | DivisibleBy 5 -> "Buzz"
+     | i -> string i
+ Partial active patterns share the syntax of parameterized patterns but their active recognizers accept only one argument.
+* COMMENT single column format
+
+Press ~C-c C-c~ on the following incantation to produce a single column portrait of the cheat sheet.
+#+name: make-portrait
+#+BEGIN_SRC emacs-lisp :results none
+(with-temp-buffer
+    (insert
+    "#+EXPORT_FILE_NAME: CheatSheet_Portrait.pdf
+     ,#+LATEX_HEADER_EXTRA: \\landscapefalse \\def\\cheatsheetcols{1}
+     ,#+INCLUDE: CheatSheet.org
+    ")
+
+    (let ((org-export-use-babel nil))
+      (org-mode)
+      (org-latex-export-to-pdf)))
+#+END_SRC
+
+* spacing COMMENT break :accomodating_multiple_formats:ignore:
+
+#+LATEX: \ifnum\cheatsheetcols=1 \newpage \else \columnbreak \fi
+
+* COMMENT Making ~README.org~
+
+  Evaluate the following source block with ~C-c C-c~
+  to produce a ~README~ file.
+
+#+NAME: make-readme
+#+BEGIN_SRC emacs-lisp
+(with-temp-buffer
+    (insert
+    "#+EXPORT_FILE_NAME: README.md
+     # HTML: <h1> Easily Making CheatSheets with Org-mode </h1>
+     ,#+OPTIONS: toc:nil d:nil
+     # Toc is displayed below at a strategic position.
+
+     {{{blurb}}}
+
+     ◈ [[https://alhassy.github.io/FSharpCheatSheet/][Website]] ◈
+
+    ,*The listing sheet, as PDF, can be found
+     [[file:CheatSheet.pdf][here]]*,
+     or as a [[file:CheatSheet_Portrait.pdf][single column portrait]],
+     while below is an unruly html rendition.
+
+     # Markdown links: [title](target)
+
+     This reference sheet is built from a
+     [[https://github.com/alhassy/CheatSheet][CheatSheets with Org-mode]]
+     system.
+
+     ,#+TOC: headlines 2
+     ,#+INCLUDE: CheatSheet.org
+    ")
+
+    ;; No code execution on export
+    ;; ⟪ For a particular block, we use “:eval never-export” ⟫
+    ;;
+    (let ((org-export-use-babel nil))
+      (org-mode)
+      (org-md-export-to-markdown)))
+#+END_SRC
+
+#+RESULTS: make-readme
+: README.md
+
+* COMMENT footer
+
+0. The first “eval” below is convenience matter
+   that should be loaded whenever CheatSheet.org is opened.
+
+1. The second “eval” makes a README for the repo, whenever the file is opened,
+   and is then bound to ~f11~ for convenience.
+
+2. Likewise, the third eval is for making a portrait form of the cheatsheet ---~f12~.
+
+3. :TOC: should not be exported in this file.
+
+   See https://github.com/snosov1/toc-org for more on toc-org.
+
+   (add-to-list 'org-export-exclude-tags "TOC")
+   (delete "TOC" org-export-exclude-tags)
+
+    And every time you'll be saving an org file, the first headline with a :TOC:
+    tag will be updated with the current table of contents.
+    (toc-org-enable)
+
+# Local Variables:
+# eval: (progn (visual-line-mode t) (require 'ox-extra) (ox-extras-activate '(ignore-headlines)))
+# eval: (local-set-key (kbd "<f11>") '(lambda () (interactive) (org-babel-goto-named-src-block "make-readme") (org-babel-execute-src-block) (outline-hide-sublevels 1)))
+# eval: (local-set-key (kbd "<f12>") '(lambda () (interactive) (org-babel-goto-named-src-block "make-portrait") (org-babel-execute-src-block) (outline-hide-sublevels 1)))
+# eval:    (add-to-list 'org-export-exclude-tags "TOC")
+# eval: (progn (visual-line-mode t) (require 'ox-extra) (ox-extras-activate '(ignore-headlines)))
+# compile-command: (org-latex-export-to-pdf)
+# End:
