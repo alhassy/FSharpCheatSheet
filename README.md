@@ -55,17 +55,17 @@ Roughly,
 -   Here's an example of explicit type annotations.
 
 ```F#
-   let x : int = 3
-   let first (x : 'a) (y: 'b) : 'a = x
+    let x : int = 3
+    let first (x : 'a) (y: 'b) : 'a = x
 ```
 
 -   Being “strongly typed” means that F# does little to no coercions, casts, for you.
 
 ```F#
-      // 5 / 2.5 (* Crashes: 5 and 2.5 are different types *)
-        float 5 / 2.5
-      ≈ 5.0 / 2.5
-      ≈ 2.0
+    // 5 / 2.5 (* Crashes: 5 and 2.5 are different types *)
+    float 5 / 2.5
+    ≈ 5.0 / 2.5
+    ≈ 2.0
 ```
 
 - F#'s conversion functions are named by the type they convert to; akin to C casts.
@@ -96,11 +96,11 @@ The `[<EntryPoint>]` is necessary for using `fsharpc`.
 ```F# 
     module CheatSheet
 
-    let myInt = 1972;;
+    let myInt = 1972
 
     [<EntryPoint>]
-    let main argv
-      = printfn "%s" (string myInt)
+    let main argv = 
+        printfn "%s" (string myInt)
         0
 ```
 
@@ -111,7 +111,6 @@ One may enter multiple lines in the REPL, then execute them by entering `;;`.
 Use `#quit;;` to leave the REPL.
 
 Execute `fsharpc CheatSheet.fs; mono CheatSheet.exe` to compile the file then run it.
-
 
 <a id="org80188a5"></a>
 
@@ -125,36 +124,36 @@ Function & varaible names *must* begin with a lowercase letter, and may use \_ o
     but no unicode or dashes in-general.
 
 ```F# 
-   let ``this & that`` = 2
+    let ``this & that`` = 2
 ```
 -   Functions are like variables, but with arguments, so the same syntax applies.
 
 ```F#
-  (* A curried function *)
-  let f x y = x + y
+    (* A curried function *)
+    let f x y = x + y
 
-  (* Function application *)
-  let result = f 10 (2 * 6)
+    (* Function application *)
+    let result = f 10 (2 * 6)
 
-  (* Partial application *)
-  let g x = f x 2
+    (* Partial application *)
+    let g x = f x 2
 
 
 
-  // Composition
-  let sum9 = f 4 >> f 5
+    // Composition
+    let sum9 = f 4 >> f 5
 
-  // Threading: x |> f  ≈  f x
-  1 |> f 4 |> fun x -> 2 //// ⇒ 2
+    // Threading: x |> f  ≈  f x
+    1 |> f 4 |> fun x -> 2 //// ⇒ 2
 ```
 
 Recursive definitions are marked with the `rec` keyword.
 
 ```F#
-  let rec fact n
-    =  if n = 0
-       then 1
-       else n * fact (n - 1)
+    let rec fact n =
+        match n with
+        | 0 -> 1
+        | _ -> n * fact (n - 1)
 ```
 
 Here's an example of a higher-order function & multiple local functions
@@ -163,8 +162,7 @@ parametricly polymorphic.
 
 ```F#
     let try_add (bop : 'a -> 'a -> 'a) (test : 'a -> bool)
-                (fallback : 'a) (x : 'a) (y : 'a)
-      = (* (/@/) x y  =  x /@/ y *)
+                (fallback : 'a) (x : 'a) (y : 'a) = (* (/@/) x y  =  x /@/ y *)
         let (/@/) x y = bop x y
         let wrap a = if test a then a else fallback
         wrap x /@/ wrap y
@@ -240,7 +238,7 @@ Records: Products with named, rather than positional, components.
 
     (* Or using explicit casing *)
     let go'' x =
-      match x with
+        match x with
         | {Name = n} -> n
         | _ -> "Uknown"
 
@@ -335,6 +333,7 @@ Tuples: Parentheses are optional, comma is the main operator.
 
     (* List catenation *)
     [1;2;4;6] = [1;2] @ [4;6]
+
     (* Pattern matching example; Only works on lists of length 3 *)
     let go [x; y; z] = x + y + z
     14 = go [2;5;7]
@@ -347,18 +346,18 @@ Tuples: Parentheses are optional, comma is the main operator.
 ```
 Here is `[0 ; 3 ; 6 ; 9 ; 12]` in a number of ways:
 ```F# 
-       [0..3..14]                                   (* Ranges, with a step    *)
+    [0..3..14]                                   (* Ranges, with a step    *)
     ≈ [for i in 0..14 do if i % 3 = 0 then yield i] (* Guarded comprehensions *)
     ≈ [for i in 0..4 -> 3 * i]                      (* Simple comprehensions  *)
-    ≈  List.init 5 (fun i -> 3 * i)
-        (* First 5 items of an “unfold” starting at 0 *)
+    ≈ List.init 5 (fun i -> 3 * i)
+    (* First 5 items of an “unfold” starting at 0 *)
 ```
 Expected: concat, map, filter, sort, max, min, etc.
 `fold` starts from the left of the list, `foldBack` starts from the right.
 `reduce` does not need an inital accumulator.
 
 ```F#
-    zs |> List.reduce (+)  // ⇒ 9
+    zs |> List.reduce (+) // ⇒ 9
     (* Example of a simple “for loop”. *)
     [1..10] |> List.iter (printfn "value is %A")
 ```
@@ -410,9 +409,9 @@ are of unit type.
     let my_io () = printfn "Hello!"
 
     let first x y
-      = my_io ()
-        let _ = y
-        x
+        = my_io ()
+            let _ = y
+            x
 
     let res = first 1972 12
 ```
