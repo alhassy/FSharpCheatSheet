@@ -80,7 +80,7 @@ Roughly,
 
     F#'s conversion functions are named by the type they convert to; akin to C casts.
 
-    -   E.g., `int 23.1` and `int "23"` both yield the integer `23`.
+    -   e.g., `int 23.1` and `int "23"` both yield the integer `23`.
     -   `string` is then the traditional “to string” method.
 
 
@@ -156,6 +156,7 @@ Function & varaible names *must* begin with a lowercase letter, and may use \_ o
 -   Functions are like variables, but with arguments, so the same syntax applies.
 
 <div class="parallel">
+ 
     (* A curried function *)
     let f x y = x + y
 
@@ -165,12 +166,10 @@ Function & varaible names *must* begin with a lowercase letter, and may use \_ o
     (* Partial application *)
     let g x = f x 2
 
-
-
-    // Composition
+    (* Composition *)
     let sum9 = f 4 >> f 5
 
-    // Threading: x |> f  ≈  f x
+    (* Threading: x |> f  ≈  f x *)
     1 |> f 4 |> fun x -> 2 //// ⇒ 2
 
 Recursive definitions are marked with the `rec` keyword.
@@ -203,16 +202,14 @@ the final expression in a definition is the return value.
 
 We also have the η-rule: `(fun x -> f x) = f`.
 
-F# has extension methods, like C#.
-That is, types are “open” &#x2014;as in  [Ruby](https://alhassy.github.io/RubyCheatSheet/CheatSheet.pdf).
+F# has extension methods, like C# (and even extension properties).
+That is, types are “open” &#x2014;as in [Ruby](https://alhassy.github.io/RubyCheatSheet/CheatSheet.pdf).
 
     type System.String with
         member this.IsCool = this.StartsWith "J"
 
     // Try it out.
     true = "Jasim".IsCool
-
-
 
 <a id="org62df07c"></a>
 
@@ -236,7 +233,7 @@ F# strings are not arrays, or lists, of characters as in C or Haskell.
 
     Seq.toList "woah"  // ⇒ ['w'; 'o'; 'a'; 'h']
 
-    Printf.printf "%d %s" 1972 "taxi";;
+    printf "%d %s" 1972 "taxi";;
 
     let input = System.Console.ReadLine()
 
@@ -277,7 +274,6 @@ Types are “open”, as in [Ruby](https://alhassy.github.io/RubyCheatSheet/Chea
 
     qasim.rank // ⇒ 5
 
-
 <a id="org5088cd6"></a>
 
 # Variants and Pattern Matching
@@ -288,9 +284,9 @@ Sums, or “variants”: A unified way to combine different types into a single
 -   Constructors must begin with a capital letter.
 -   We may parameterise using OCaml style, `'a`, or/and C# style, `<'a>`.
 
-    type 'a Expr = Undefined | Var of 'a | Const of int | Sum of Expr<'a> * 'a Expr
+        type 'a Expr = Undefined | Var of 'a | Const of int | Sum of Expr<'a> * 'a Expr
 
-    let that = Const 2 (* A value is one of the listed cases. *)
+        let that = Const 2 (* A value is one of the listed cases. *)
 
 The tags allow us to *extract* components of a variant value
 as well as to case against values by inspecting their tags.
@@ -300,21 +296,21 @@ This is *pattern matching*.
 -   Patterns may be guarded using `when`.
 -   Abbreviation for functions defined by pattern matching: `function cs ≈ fun x -> match x with cs`
 
-    let rec eval = function
-        | Undefined  as u             -> failwith "Evil"  (* Throw exception *)
-        | Var x                       -> 0 + match x with "x" -> 999 | _ -> -1
-        | Const n    when n <= 9      -> 9
-        | Sum (l, r)                  -> eval l + eval r
-        | _                           -> 0 (* Default case *)
+        let rec eval = function
+            | Undefined  as u             -> failwith "Evil"  (* Throw exception *)
+            | Var x                       -> 0 + match x with "x" -> 999 | _ -> -1
+            | Const n    when n <= 9      -> 9
+            | Sum (l, r)                  -> eval l + eval r
+            | _                           -> 0 (* Default case *)
 
-    4   = eval that
-    -1  = (Var "nine" |> eval)
-    999 = eval (Var "x")
-    0   = eval (Const 10)
+        4   = eval that
+        -1  = (Var "nine" |> eval)
+        999 = eval (Var "x")
+        0   = eval (Const 10)
 
-    (* Type aliases can also be formed this way *)
-    type myints = int
-    let it : myints = 3
+        (* Type aliases can also be formed this way *)
+        type myints = int
+        let it : myints = 3
 
 Note that we can give a pattern a name; above we mentioned `u`,
 but did not use it.
@@ -322,7 +318,7 @@ but did not use it.
 -   Repeated & non-exhaustive patterns trigger a warning; e.g., remove the default case above.
 
 -   You can pattern match on numbers, characters, tuples, options, lists, and arrays.
-    -   E.g., `[| x ; y ; z|] -> y`.
+    -   e.g., `[| x ; y ; z|] -> y`.
 
 Builtins: [Options](https://docs.microsoft.com/en-us/dotnet/fsharp/language-reference/options) and [Choice](https://msdn.microsoft.com/visualfsharpdocs/conceptual/core.choice%5b%27t1%2c%27t2%5d-union-%5bfsharp%5d) &#x2014;these are known as `Maybe` and `Either` in Haskell.
 
@@ -346,7 +342,7 @@ Tuples: Parentheses are optional, comma is the main operator.
     let add_1and4 (w, x, y, z) = w + z
     let that = fst ("that", false)
 
-    (* A singelton list of one tuple !!!!  *)
+    (* A singleton list of one tuple !!!! *)
     let zs = [ 1, "two", true ]
 
     (* A List of pairs *)
@@ -358,11 +354,12 @@ Tuples: Parentheses are optional, comma is the main operator.
 
     (* List catenation *)
     [1;2;4;6] = [1;2] @ [4;6]
+
     (* Pattern matching example; Only works on lists of length 3 *)
     let go [x; y; z] = x + y + z
     14 = go [2;5;7]
 
-    (* Crashes: Incomplete pattern matching *)
+    (* Warns with high severity when compiling, throws at runtime: Incomplete pattern matching *)
     match [1; 2; 3] with
      | []     -> 1
      | [x; y] -> x
@@ -376,22 +373,21 @@ Here is `[0 ; 3 ; 6 ; 9 ; 12]` in a number of ways:
     ≈  List.init 5 (fun i -> 3 * i)
         (* First 5 items of an “unfold” starting at 0 *)
 
-Expected: concat, map, filter, sort, max, min, etc.
+Expected: `concat`, `map`, `filter`, `sort`, `max`, `min`, etc.
 `fold` starts from the left of the list, `foldBack` starts from the right.
-`reduce` does not need an inital accumulator.
+`reduce` does not need an initial accumulator.
 
     zs |> List.reduce (+)  // ⇒ 9
+
     (* Example of a simple “for loop”. *)
     [1..10] |> List.iter (printfn "value is %A")
 
 Arrays use `[|⋯|]` syntax, and are efficient,
 but otherwise are treated the same as lists;
 Pattern matching & standard functions are nearly identical.
-E.g., `[| 1; 2 |]` is an array.
+e.g., `[| 1; 2 |]` is an array.
 
 Lazy, and infinite, structures are obtained by ‘sequences’.
-
-
 
 <a id="org2ec44b9"></a>
 
@@ -407,18 +403,18 @@ Lazy, and infinite, structures are obtained by ‘sequences’.
     let getInt ox = match ox with None -> 0 | Some x -> x
     2 = getInt (Some 2)
 
-
 <a id="orgb1c12e3"></a>
 
 # Side Effects ---[Unit Type](https://docs.microsoft.com/en-us/dotnet/fsharp/language-reference/unit-type)
 
 Operations whose use produces a side-effect return the `unit` type.
-This’ akin to the role played by `void` in C.
+This is akin to the role played by `void` in C.
 A *function* is a sequence of expressions; its *return value*
-is the value of the final expression &#x2014;all other expressions
+is the value of the final expression &#x2014; all other expressions
 are of unit type.
 
 <div class="parallel">
+ 
     (* type unit = () *)
     let ex : unit = ()
 
@@ -441,7 +437,6 @@ are of unit type.
 
 </div>
 
-
 <a id="orgfb8ae57"></a>
 
 # Printing & Integrating with C#
@@ -454,8 +449,7 @@ We may use the `%A` to generically print something.
 Let's use [C#'s integer parsing](https://docs.microsoft.com/en-us/dotnet/api/system.int32.parse?view=netframework-4.8) and printing methods:
 
     let x = System.Int32.Parse("3")
-    System.Console.WriteLine("hello " + string x)
-
+    System.Console.WriteLine("hello {0}", x)
 
 <a id="org450c66b"></a>
 
